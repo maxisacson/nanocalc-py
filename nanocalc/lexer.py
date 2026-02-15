@@ -115,6 +115,8 @@ def tokenize(s):
     # 'number':
     #   | [0-9]+\.?[0-9]*([eE]-?)[0-9]*
     #   | \.[0-9]*([eE]-?)[0-9]*
+    # 'identifier':
+    #   | [_a-zA-Z][_a-zA-Z0-9']*
     # 'string': (?<=").*(?=")
 
     tokens = []

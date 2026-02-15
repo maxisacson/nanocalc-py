@@ -253,3 +253,33 @@ def test_range8():
     expected = [0, 1, 2]
 
     assert actual == expected
+
+
+def test_range_comp():
+    code = '1..3==1..3'
+
+    e = parse_expression(code)
+    actual = e.eval()
+    expected = [True, True, True]
+
+    assert actual == expected
+
+
+def test_range_comp2():
+    code = '1..3==2..4'
+
+    e = parse_expression(code)
+    actual = e.eval()
+    expected = [False, False, False]
+
+    assert actual == expected
+
+
+def test_range_comp3():
+    code = '1..3==[2, 2, 2]'
+
+    e = parse_expression(code)
+    actual = e.eval()
+    expected = [False, True, False]
+
+    assert actual == expected

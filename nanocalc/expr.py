@@ -178,6 +178,12 @@ def binop_reduce(op, context, left, right):
     if isinstance(right, Expr):
         return binop_reduce(op, context, left, right.eval(context))
 
+    if isinstance(left, types.GeneratorType):
+        left = list(left)
+
+    if isinstance(right, types.GeneratorType):
+        right = list(right)
+
     if isinstance(left, list) and isinstance(right, list):
         if len(left) != len(right):
             raise EvalError('expected lists to have the same length')

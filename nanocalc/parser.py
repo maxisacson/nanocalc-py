@@ -9,13 +9,14 @@ stmnt:
   | 'for', 'identifier', 'in', expr, 'eol'?, stmnt
   | 'command', expr*
   | expr, [ 'if', expr ]
-expr: disj, [ '..', disj, [ '..', ('+' | '-')?, disj ] ]
+expr: disj
 disj: conj, { 'or', conj }
 conj: neg, { 'and', neg }
 neg:
   | 'not', neg
   | comp
-comp: sum, { '<' | '>' | '<=' | '>=' | '==' | '!=', sum }
+comp: range, { '<' | '>' | '<=' | '>=' | '==' | '!=', range }
+range: sum, [ '..', sum, [ '..', ('+' | '-')?, sum ] ]
 sum: term, { '+' | '-', term }
 term: factor, { '*' | '/' | '%', factor }
 factor:
@@ -37,7 +38,6 @@ items: expr, { ',', expr }
 block: '{', 'eol'*, stmnts?, 'eol'*, '}'
 end: ';' | 'eol'
 """
-
 
 FIRST_block = {'{'}
 FIRST_atom = {'identifier', '(', '[', '#', 'number', 'string'} | FIRST_block
@@ -223,24 +223,6 @@ def parse_term(tokens):
 @trace
 def parse_expr(tokens):
     left, tokens = parse_disj(tokens)
-
-    if peek(tokens).type == '..':
-        tokens.pop(0)
-        right, tokens = parse_disj(tokens)
-
-        if peek(tokens).type == '..':
-            tokens.pop(0)
-            if peek(tokens).type == '+':
-                tokens.pop(0)
-                type = 'incr'
-            else:
-                type = 'count'
-            step, tokens = parse_disj(tokens)
-            left = [left, right]
-            right = [step, type]
-
-        left = Expr('range', left, right)
-
     return left, tokens
 
 
@@ -279,12 +261,36 @@ def parse_neg(tokens):
 
 
 @trace
-def parse_comp(tokens):
+def parse_range(tokens):
     left, tokens = parse_sum(tokens)
+
+    if peek(tokens).type == '..':
+        tokens.pop(0)
+        right, tokens = parse_sum(tokens)
+
+        if peek(tokens).type == '..':
+            tokens.pop(0)
+            if peek(tokens).type == '+':
+                tokens.pop(0)
+                type = 'incr'
+            else:
+                type = 'count'
+            step, tokens = parse_sum(tokens)
+            left = [left, right]
+            right = [step, type]
+
+        left = Expr('range', left, right)
+
+    return left, tokens
+
+
+@trace
+def parse_comp(tokens):
+    left, tokens = parse_range(tokens)
     exprs = []
     while peek(tokens).type in ['<', '>', '<=', '>=', '==', '!=']:
         op = tokens.pop(0)
-        right, tokens = parse_sum(tokens)
+        right, tokens = parse_range(tokens)
         expr = Expr(op.type, right)
         exprs.append(expr)
 
